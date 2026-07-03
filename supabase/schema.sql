@@ -20,6 +20,7 @@ create table matches (
 create table players (
   id uuid primary key default gen_random_uuid(),
   name text not null unique,
+  auth_user_id uuid unique references auth.users(id),
   created_at timestamptz not null default now()
 );
 
@@ -46,14 +47,22 @@ alter table predictions enable row level security;
 create policy "read matches"  on matches  for select using (true);
 create policy "write matches" on matches  for all using (true) with check (true);
 create policy "read players"  on players  for select using (true);
-create policy "add players"   on players  for insert with check (true);
+create policy "signup creates own player" on players for insert to authenticated
+  with check (auth_user_id = auth.uid());
+create policy "claim or rename own player" on players for update to authenticated
+  using (auth_user_id is null or auth_user_id = auth.uid())
+  with check (auth_user_id = auth.uid());
 create policy "read predictions" on predictions for select using (true);
-create policy "predict before kickoff" on predictions for insert
-  with check (exists (select 1 from matches m
-    where m.id = match_id and m.kickoff_at > now() and m.status = 'upcoming'));
-create policy "repredict before kickoff" on predictions for update
-  using (exists (select 1 from matches m
-    where m.id = predictions.match_id and m.kickoff_at > now() and m.status = 'upcoming'));
+create policy "own predictions before kickoff" on predictions for insert to authenticated
+  with check (
+    exists (select 1 from players p where p.id = player_id and p.auth_user_id = auth.uid())
+    and exists (select 1 from matches m
+      where m.id = match_id and m.kickoff_at > now() and m.status = 'upcoming'));
+create policy "own repredictions before kickoff" on predictions for update to authenticated
+  using (
+    exists (select 1 from players p where p.id = predictions.player_id and p.auth_user_id = auth.uid())
+    and exists (select 1 from matches m
+      where m.id = predictions.match_id and m.kickoff_at > now() and m.status = 'upcoming'));
 
 create or replace function set_updated_at() returns trigger language plpgsql as
 $$ begin new.updated_at = now(); return new; end $$;

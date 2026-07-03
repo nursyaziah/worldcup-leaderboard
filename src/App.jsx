@@ -5,8 +5,6 @@ import {
   whatsappText, POINTS_WINNER, POINTS_EXACT, flag,
 } from './lib.js'
 
-const LS_PLAYER = 'wc2026_player'
-
 export default function App() {
   const [config, setConfig] = useState(undefined) // undefined = loading, null = failed
   useEffect(() => {
@@ -33,9 +31,8 @@ function SetupNotice() {
 function Game({ config }) {
   const supabase = useMemo(
     () => createClient(config.supabaseUrl, config.supabaseAnonKey), [config])
-  const [player, setPlayer] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(LS_PLAYER)) } catch { return null }
-  })
+  const [session, setSession] = useState(undefined) // undefined = still checking
+  const [player, setPlayer] = useState(undefined)   // null = signed in, no name yet
   const [matches, setMatches] = useState([])
   const [players, setPlayers] = useState([])
   const [predictions, setPredictions] = useState([])
@@ -62,21 +59,36 @@ function Game({ config }) {
     return () => clearInterval(t)
   }, [refresh])
 
-  const savePlayer = async (name) => {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    const { data: sub } = supabase.auth.onAuthStateChange((_ev, s) => setSession(s))
+    return () => sub.subscription.unsubscribe()
+  }, [supabase])
+
+  useEffect(() => {
+    if (!session) { setPlayer(session === undefined ? undefined : null); return }
+    supabase.from('players').select('*')
+      .eq('auth_user_id', session.user.id).maybeSingle()
+      .then(({ data }) => setPlayer(data ?? null))
+  }, [session, supabase])
+
+  const claimName = async (name) => {
     const clean = name.trim().slice(0, 30)
     if (!clean) return
-    // adopt an existing player with the same name (trusted group, no auth)
+    // a player row from before login existed may have this name — adopt it
     const { data: existing } = await supabase.from('players')
       .select('*').ilike('name', clean).maybeSingle()
-    let row = existing
-    if (!row) {
+    if (existing) {
+      if (existing.auth_user_id) { setError('That name is taken — pick another.'); return }
       const { data, error: e } = await supabase.from('players')
-        .insert({ name: clean }).select().single()
-      if (e) { setError('Could not save name, try again.'); return }
-      row = data
+        .update({ auth_user_id: session.user.id }).eq('id', existing.id).select().single()
+      if (e) { setError('Could not claim that name, try another.'); return }
+      setError(''); setPlayer(data); refresh(); return
     }
-    localStorage.setItem(LS_PLAYER, JSON.stringify(row))
-    setPlayer(row)
+    const { data, error: e } = await supabase.from('players')
+      .insert({ name: clean, auth_user_id: session.user.id }).select().single()
+    if (e) { setError('Could not save name, try another.'); return }
+    setError(''); setPlayer(data)
     refresh()
   }
 
@@ -108,16 +120,18 @@ function Game({ config }) {
     () => buildLeaderboard(players, predictions, matches),
     [players, predictions, matches])
 
-  if (!player) return <NameGate onSubmit={savePlayer} />
+  if (session === undefined || (session && player === undefined))
+    return <div className="center">Loading…</div>
+  if (!session) return <AuthGate supabase={supabase} />
+  if (player === null)
+    return <NamePick onSubmit={claimName} error={error} onLogout={() => supabase.auth.signOut()} />
 
   return (
     <div className="app">
       <header>
         <h1>⚽ WC2026 Predictions</h1>
         <span className="who">Hi, {player.name}!{' '}
-          <button className="link" onClick={() => {
-            localStorage.removeItem(LS_PLAYER); setPlayer(null)
-          }}>not you?</button>
+          <button className="link" onClick={() => supabase.auth.signOut()}>log out</button>
         </span>
       </header>
       {error && <div className="banner">{error}</div>}
@@ -136,17 +150,63 @@ function Game({ config }) {
   )
 }
 
-function NameGate({ onSubmit }) {
-  const [name, setName] = useState('')
+function AuthGate({ supabase }) {
+  const [mode, setMode] = useState('signin')
+  const [email, setEmail] = useState('')
+  const [pw, setPw] = useState('')
+  const [msg, setMsg] = useState('')
+  const [busy, setBusy] = useState(false)
+  const submit = async (e) => {
+    e.preventDefault()
+    setMsg(''); setBusy(true)
+    if (mode === 'signup') {
+      const { data, error } = await supabase.auth.signUp({ email, password: pw })
+      if (error) setMsg(error.message)
+      else if (!data.session)
+        setMsg('Account created! Check your email for a confirmation link, then log in.')
+      // if a session came back, onAuthStateChange takes it from here
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password: pw })
+      if (error) setMsg(error.message === 'Invalid login credentials'
+        ? 'Wrong email or password.' : error.message)
+    }
+    setBusy(false)
+  }
   return (
     <div className="center card">
       <h1>⚽ World Cup 2026<br />Family Predictions</h1>
-      <p>Enter your name to start picking winners:</p>
+      <p>{mode === 'signin' ? 'Log in to make your picks:' : 'Create your account:'}</p>
+      <form className="stack" onSubmit={submit}>
+        <input type="email" required value={email} placeholder="Email"
+          autoComplete="email" onChange={e => setEmail(e.target.value)} />
+        <input type="password" required minLength={6} value={pw} placeholder="Password (min 6 chars)"
+          autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+          onChange={e => setPw(e.target.value)} />
+        <button type="submit" className="primary" disabled={busy}>
+          {mode === 'signin' ? 'Log in' : 'Sign up'}
+        </button>
+      </form>
+      {msg && <p className="note">{msg}</p>}
+      <p><button className="link" onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setMsg('') }}>
+        {mode === 'signin' ? "First time? Create an account" : 'Already have an account? Log in'}
+      </button></p>
+    </div>
+  )
+}
+
+function NamePick({ onSubmit, error, onLogout }) {
+  const [name, setName] = useState('')
+  return (
+    <div className="center card">
+      <h1>⚽ Almost there!</h1>
+      <p>Pick your display name for the leaderboard:</p>
       <form onSubmit={e => { e.preventDefault(); onSubmit(name) }}>
         <input autoFocus value={name} maxLength={30} placeholder="Your name"
           onChange={e => setName(e.target.value)} />
         <button type="submit" className="primary" disabled={!name.trim()}>Let's go</button>
       </form>
+      {error && <p className="bad">{error}</p>}
+      <p><button className="link" onClick={onLogout}>log out</button></p>
     </div>
   )
 }
