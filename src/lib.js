@@ -4,6 +4,26 @@ export const POINTS_EXACT = 2
 
 export const ROUNDS = { R32: 'Round of 32', R16: 'Round of 16', QF: 'Quarterfinals', SF: 'Semifinals', F: 'Final' }
 
+const FLAGS = {
+  Canada: '🇨🇦', Morocco: '🇲🇦', USA: '🇺🇸', 'United States': '🇺🇸',
+  Belgium: '🇧🇪', Brazil: '🇧🇷', Norway: '🇳🇴', Paraguay: '🇵🇾',
+  France: '🇫🇷', Mexico: '🇲🇽', England: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', Australia: '🇦🇺',
+  Egypt: '🇪🇬', Argentina: '🇦🇷', 'Cape Verde Islands': '🇨🇻', 'Cape Verde': '🇨🇻',
+  Colombia: '🇨🇴', Ghana: '🇬🇭', Spain: '🇪🇸', Germany: '🇩🇪', Portugal: '🇵🇹',
+  Netherlands: '🇳🇱', Croatia: '🇭🇷', Japan: '🇯🇵', Uruguay: '🇺🇾',
+  Senegal: '🇸🇳', Switzerland: '🇨🇭', Italy: '🇮🇹', Denmark: '🇩🇰',
+  Ecuador: '🇪🇨', 'Korea Republic': '🇰🇷', 'South Korea': '🇰🇷', Iran: '🇮🇷',
+  'Saudi Arabia': '🇸🇦', Qatar: '🇶🇦', Panama: '🇵🇦', 'Costa Rica': '🇨🇷',
+  Scotland: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', Austria: '🇦🇹', Uzbekistan: '🇺🇿', Jordan: '🇯🇴',
+  'New Zealand': '🇳🇿', Haiti: '🇭🇹', Curaçao: '🇨🇼', Tunisia: '🇹🇳',
+  Algeria: '🇩🇿', 'Ivory Coast': '🇨🇮', "Côte d'Ivoire": '🇨🇮', Poland: '🇵🇱',
+}
+
+export function flag(team) {
+  if (!team || team === 'TBD') return '⏳'
+  return FLAGS[team] ?? '⚽'
+}
+
 export function isTbd(match) {
   return match.team_a === 'TBD' || match.team_b === 'TBD'
 }
@@ -60,7 +80,7 @@ export function whatsappText(matches, leaderboard) {
     const m = done[0]
     const mid = m.score_a != null ? ` ${m.score_a}-${m.score_b} ` : ' vs '
     const winner = m.result === 'team_a' ? m.team_a : m.team_b
-    lines.push(`${m.team_a}${mid}${m.team_b} — ${winner} through! ⚽`)
+    lines.push(`${flag(m.team_a)} ${m.team_a}${mid}${m.team_b} ${flag(m.team_b)} — ${winner} through!`)
   }
   lines.push('', 'Leaderboard:')
   leaderboard.slice(0, 10).forEach((row, i) => {

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import {
   ROUNDS, isTbd, isLocked, fmtSgt, scorePrediction, buildLeaderboard,
-  whatsappText, POINTS_WINNER, POINTS_EXACT,
+  whatsappText, POINTS_WINNER, POINTS_EXACT, flag,
 } from './lib.js'
 
 const LS_PLAYER = 'wc2026_player'
@@ -210,7 +210,9 @@ function MatchCard({ match, pred, onSubmit }) {
         className={'team' + (picked ? ' picked' : '') + (won ? ' winner' : '')}
         disabled={locked || tbd}
         onClick={() => onSubmit(match, { pick: side })}>
-        {name}{done && match.score_a != null && (
+        <span className="flag">{flag(name)}</span>
+        <span className="tname">{name}</span>
+        {done && match.score_a != null && (
           <span className="sc">{side === 'team_a' ? match.score_a : match.score_b}</span>)}
       </button>
     )
@@ -251,7 +253,7 @@ function Leaderboard({ rows, me }) {
     <div className="list">
       {rows.map((row, i) => (
         <div key={row.player.id} className={'lb' + (row.player.id === me.id ? ' me' : '')}>
-          <span className="rank">{i + 1}</span>
+          <span className="rank">{['🥇', '🥈', '🥉'][i] ?? i + 1}</span>
           <span className="name">{row.player.name}</span>
           <span className="detail">{row.winners}W · {row.exacts}🎯</span>
           <span className="pts">{row.total} pts</span>
