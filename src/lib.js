@@ -75,7 +75,7 @@ export function buildLeaderboard(players, predictions, matches) {
 export function whatsappText(matches, leaderboard) {
   const done = matches.filter(m => m.status === 'completed' && m.result)
     .sort((a, b) => new Date(b.kickoff_at) - new Date(a.kickoff_at))
-  const lines = ['🏆 World Cup Predictions Update']
+  const lines = ['🏆 Aminah HQ — World Cup Update']
   if (done.length) {
     const m = done[0]
     const mid = m.score_a != null ? ` ${m.score_a}-${m.score_b} ` : ' vs '

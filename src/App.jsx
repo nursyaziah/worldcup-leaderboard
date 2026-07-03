@@ -129,7 +129,7 @@ function Game({ config }) {
   return (
     <div className="app">
       <header>
-        <h1>⚽ WC2026 Predictions</h1>
+        <h1>⚽ Aminah HQ</h1>
         <span className="who">Hi, {player.name}!{' '}
           <button className="link" onClick={() => supabase.auth.signOut()}>log out</button>
         </span>
@@ -174,7 +174,7 @@ function AuthGate({ supabase }) {
   }
   return (
     <div className="center card">
-      <h1>⚽ World Cup 2026<br />Family Predictions</h1>
+      <h1>⚽ Aminah Headquaters<br />World Cup Prediction Game</h1>
       <p>{mode === 'signin' ? 'Log in to make your picks:' : 'Create your account:'}</p>
       <form className="stack" onSubmit={submit}>
         <input type="email" required value={email} placeholder="Email"
