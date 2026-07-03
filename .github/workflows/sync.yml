@@ -1,7 +1,7 @@
 name: Sync match data
 on:
   schedule:
-    - cron: '*/5 * * * *'   # every ~5 min (GitHub may delay a few minutes)
+    - cron: '7,22,37,52 * * * *'  # off-peak minutes: the */5 slot is so congested GitHub was only firing every ~80-95 min
   workflow_dispatch:
 jobs:
   sync:
