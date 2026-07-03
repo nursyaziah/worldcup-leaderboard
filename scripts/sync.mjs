@@ -77,20 +77,33 @@ for (const am of knockout) {
   }
 
   const finished = am.status === 'FINISHED'
-  if (finished && !am.score?.winner) {
-    console.log(`finished but winner not set yet for ${home} vs ${away}: ${JSON.stringify(am.score)}`)
+  // winner can lag minutes behind status=FINISHED. When the match was decided
+  // in 90'/ET the goal totals are already stable, so derive the winner from
+  // them. Shootouts must keep waiting for the API's winner: penalty figures
+  // update kick by kick and an intermediate value can point at the eventual
+  // loser (seen 2026-07-03: pens reported 4-4 while the real result was 2-4).
+  let winner = am.score?.winner
+  if (finished && !winner && am.score?.duration !== 'PENALTY_SHOOTOUT') {
+    const ft = am.score?.fullTime
+    if (ft?.home != null && ft?.away != null && ft.home !== ft.away) {
+      winner = ft.home > ft.away ? 'HOME_TEAM' : 'AWAY_TEAM'
+      console.log(`derived winner from fullTime for ${home} vs ${away} (${ft.home}-${ft.away})`)
+    }
+  }
+  if (finished && !winner) {
+    console.log(`finished but winner not derivable yet for ${home} vs ${away}: ${JSON.stringify(am.score)}`)
   }
   const live = ['IN_PLAY', 'PAUSED'].includes(am.status)
   const manualResult = row?.result_source === 'manual' // admin override wins
   if (!manualResult) {
-    if (finished && am.score?.winner) {
+    if (finished && winner) {
       // regulation 90' score: fullTime includes extra time when played,
       // so prefer regularTime when the match went beyond 90 minutes
       const reg = (am.score.duration !== 'REGULAR' && am.score.regularTime)
         ? am.score.regularTime : am.score.fullTime
       upd.status = 'completed'
-      upd.result = am.score.winner === 'HOME_TEAM' ? 'team_a'
-        : am.score.winner === 'AWAY_TEAM' ? 'team_b' : null
+      upd.result = winner === 'HOME_TEAM' ? 'team_a'
+        : winner === 'AWAY_TEAM' ? 'team_b' : null
       upd.score_a = reg?.home ?? null
       upd.score_b = reg?.away ?? null
       upd.result_source = 'api'
