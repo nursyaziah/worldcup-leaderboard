@@ -3,7 +3,6 @@
 Private prediction game for family & friends for the 2026 World Cup knockout
 rounds. Pick winners, optionally guess exact scores, watch the live leaderboard.
 
-**Live app:** https://nursyaziah.github.io/worldcup-leaderboard/
 **Setting it up?** See [WAKE-UP-CHECKLIST.md](WAKE-UP-CHECKLIST.md).
 
 ## How it works
