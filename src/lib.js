@@ -2,7 +2,7 @@
 export const POINTS_WINNER = 1
 export const POINTS_EXACT = 2
 
-export const ROUNDS = { R16: 'Round of 16', QF: 'Quarterfinals', SF: 'Semifinals', F: 'Final' }
+export const ROUNDS = { R32: 'Round of 32', R16: 'Round of 16', QF: 'Quarterfinals', SF: 'Semifinals', F: 'Final' }
 
 export function isTbd(match) {
   return match.team_a === 'TBD' || match.team_b === 'TBD'

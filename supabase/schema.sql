@@ -4,7 +4,7 @@
 create table matches (
   id uuid primary key default gen_random_uuid(),
   external_id text unique,          -- football-data.org match id, filled by the sync job
-  round text not null check (round in ('R16','QF','SF','F')),
+  round text not null check (round in ('R32','R16','QF','SF','F')),
   team_a text not null default 'TBD',
   team_b text not null default 'TBD',
   kickoff_at timestamptz not null,

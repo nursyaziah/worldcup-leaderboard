@@ -10,7 +10,7 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !FOOTBALL_DATA_TOKEN) {
 }
 
 const STAGE_TO_ROUND = {
-  LAST_16: 'R16', QUARTER_FINALS: 'QF', SEMI_FINALS: 'SF', FINAL: 'F',
+  LAST_32: 'R32', LAST_16: 'R16', QUARTER_FINALS: 'QF', SEMI_FINALS: 'SF', FINAL: 'F',
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -82,6 +82,10 @@ for (const am of knockout) {
     const { error: e } = await supabase.from('matches').update(upd).eq('id', row.id)
     if (e) console.error(`update failed for ${extId}:`, e.message)
     else console.log(`updated ${round} ${upd.team_a ?? row.team_a} vs ${upd.team_b ?? row.team_b}${upd.result ? ' (final)' : ''}`)
+  } else if (finished) {
+    // never seen this match and it's already over (e.g. old R32 games) —
+    // nobody could have predicted it, so don't clutter the app with it
+    continue
   } else {
     // new match the app doesn't know yet (e.g. a QF slot) — insert it
     const { error: e } = await supabase.from('matches').insert({
