@@ -1,6 +1,7 @@
-// Point values — confirm with Syaz (PRD Open Question 3). One place to change.
-export const POINTS_WINNER = 1
-export const POINTS_EXACT = 2
+// Point values — one place to change.
+export const POINTS_WINNER = 5
+export const POINTS_EXACT = 5   // both goal counts right (bonus on top of winner)
+export const POINTS_PARTIAL = 2 // exactly one team's goal count right
 
 export const ROUNDS = { R32: 'Round of 32', R16: 'Round of 16', QF: 'Quarterfinals', SF: 'Semifinals', F: 'Final' }
 
@@ -45,17 +46,21 @@ export function scorePrediction(pred, match) {
   let pts = 0
   const winnerRight = pred.pick === match.result
   if (winnerRight) pts += POINTS_WINNER
-  const exact = match.score_a != null && match.score_b != null &&
-    pred.predicted_score_a === match.score_a && pred.predicted_score_b === match.score_b
+  const haveScore = match.score_a != null && match.score_b != null
+  const aRight = haveScore && pred.predicted_score_a === match.score_a
+  const bRight = haveScore && pred.predicted_score_b === match.score_b
+  const exact = aRight && bRight
+  const partial = !exact && (aRight || bRight)
   if (exact) pts += POINTS_EXACT
-  return { pts, winnerRight, exact }
+  if (partial) pts += POINTS_PARTIAL
+  return { pts, winnerRight, exact, partial }
 }
 
-// rows: [{ player, total, winners, exacts }] ranked by points desc, then name (placeholder tiebreak)
+// rows: [{ player, total, winners, exacts, partials }] ranked by points desc, then name (placeholder tiebreak)
 export function buildLeaderboard(players, predictions, matches) {
   const byMatch = new Map(matches.map(m => [m.id, m]))
   const rows = players.map(player => {
-    let total = 0, winners = 0, exacts = 0
+    let total = 0, winners = 0, exacts = 0, partials = 0
     for (const pred of predictions) {
       if (pred.player_id !== player.id) continue
       const match = byMatch.get(pred.match_id)
@@ -65,8 +70,9 @@ export function buildLeaderboard(players, predictions, matches) {
       total += s.pts
       if (s.winnerRight) winners++
       if (s.exact) exacts++
+      if (s.partial) partials++
     }
-    return { player, total, winners, exacts }
+    return { player, total, winners, exacts, partials }
   })
   rows.sort((a, b) => b.total - a.total || a.player.name.localeCompare(b.player.name))
   return rows

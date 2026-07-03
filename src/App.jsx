@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import {
   ROUNDS, isTbd, isLocked, fmtSgt, scorePrediction, buildLeaderboard,
-  whatsappText, POINTS_WINNER, POINTS_EXACT, flag,
+  whatsappText, POINTS_WINNER, POINTS_EXACT, POINTS_PARTIAL, flag,
 } from './lib.js'
 
 export default function App() {
@@ -145,7 +145,7 @@ function Game({ config }) {
       {tab === 'admin' && (admin
         ? <AdminPanel supabase={supabase} matches={matches} leaderboard={leaderboard} refresh={refresh} />
         : <PinGate pin={config.adminPin} onOk={() => setAdmin(true)} />)}
-      <footer>Winner pick +{POINTS_WINNER} · exact 90-min score +{POINTS_EXACT} bonus · picks lock at kickoff · times in SGT</footer>
+      <footer>Winner pick +{POINTS_WINNER} · exact 90-min score +{POINTS_EXACT} bonus · one team's goals right +{POINTS_PARTIAL} · picks lock at kickoff · times in SGT</footer>
     </div>
   )
 }
@@ -283,7 +283,7 @@ function MatchCard({ match, pred, onSubmit }) {
       <div className="meta">
         <span>{fmtSgt(match.kickoff_at)}</span>
         <span className="state">
-          {done ? (s ? `${s.pts} pt${s.pts === 1 ? '' : 's'} ${s.winnerRight ? '✅' : '❌'}${s.exact ? ' 🎯' : ''}` : 'Final')
+          {done ? (s ? `${s.pts} pt${s.pts === 1 ? '' : 's'} ${s.winnerRight ? '✅' : '❌'}${s.exact ? ' 🎯' : s.partial ? ' 🎯½' : ''}` : 'Final')
             : tbd ? 'Matchup TBD'
             : locked ? '🔒 Locked'
             : pred ? '✅ Picked' : 'Tap to pick'}
@@ -296,7 +296,7 @@ function MatchCard({ match, pred, onSubmit }) {
       </div>
       {!tbd && (pred || !locked) && (
         <div className="scoreline">
-          <label>90-min score (optional, +{POINTS_EXACT}):</label>
+          <label>90-min score (optional, +{POINTS_EXACT} exact / +{POINTS_PARTIAL} one side):</label>
           <input type="number" min="0" max="99" inputMode="numeric" value={sa} disabled={locked || !pred}
             onChange={e => setSa(e.target.value)} onBlur={saveScore} />
           <span>–</span>
@@ -315,7 +315,7 @@ function Leaderboard({ rows, me }) {
         <div key={row.player.id} className={'lb' + (row.player.id === me.id ? ' me' : '')}>
           <span className="rank">{['🥇', '🥈', '🥉'][i] ?? i + 1}</span>
           <span className="name">{row.player.name}</span>
-          <span className="detail">{row.winners}W · {row.exacts}🎯</span>
+          <span className="detail">{row.winners}W · {row.exacts}🎯 · {row.partials}🎯½</span>
           <span className="pts">{row.total} pts</span>
         </div>
       ))}
