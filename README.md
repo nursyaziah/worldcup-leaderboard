@@ -10,7 +10,8 @@ rounds. Pick winners, optionally guess exact scores, watch the live leaderboard.
 
 - **Frontend:** Vite + React, mobile-first, deployed to GitHub Pages on every
   push to `main` (`.github/workflows/deploy.yml`). Runtime config (Supabase URL,
-  anon key, admin PIN) lives in `public/config.json`.
+  anon key, admin PIN) is generated into `public/config.json` at deploy time
+  from GitHub Actions secrets — no keys are committed to the repo.
 - **Database:** Supabase Postgres — schema + seed in `supabase/schema.sql`.
   Players and predictions are written straight from the browser with the anon
   key; RLS enforces the one hard rule (no predictions after kickoff).

@@ -1,72 +1,50 @@
-# ☀️ Good morning Syaz — 3 steps to go live (~10 minutes)
+# ☀️ Setup status
 
-The app is **built, pushed, and deployed**. It's waiting on the two accounts
-only you can log into: Supabase and football-data.org. Everything else is done.
+**App URL:** https://nursyaziah.github.io/worldcup-leaderboard/
 
-**Your app URL:** https://nursyaziah.github.io/worldcup-leaderboard/
-(right now it shows a "database not connected" notice — that disappears after Step 2)
+- ✅ App built, deployed to GitHub Pages, auto-deploys on every push
+- ✅ football-data.org token registered, verified, and stored as the
+  `FOOTBALL_DATA_TOKEN` Actions secret (2026-07-03)
+- ✅ Sync workflow running every ~5 min (no-ops until Supabase secrets exist)
+- ⬜ Supabase connection — the only remaining step
 
----
+## Remaining step — connect Supabase
 
-## Step 1 — Create the Supabase project (~4 min)
+No keys are ever committed to this repo. The frontend's `config.json` is
+generated at deploy time from GitHub Actions **secrets**, and the sync job
+reads secrets directly.
 
-1. Go to https://supabase.com/dashboard → **New project** (any name, e.g. `worldcup`).
-2. When it's ready, open **SQL Editor** → **New query**, paste the entire
-   contents of [`supabase/schema.sql`](supabase/schema.sql) from this repo, and **Run**.
-   This creates the tables and seeds the 8 Round-of-16 slots
-   (Canada–Morocco, USA–Belgium, Brazil–Norway + 5 TBD — all editable in the app's admin tab).
-3. Go to **Project Settings → API** and copy three things:
-   - Project URL (looks like `https://xxxx.supabase.co`)
-   - `anon` public key
-   - `service_role` key (keep this one secret)
-
-## Step 2 — Connect the frontend (~2 min)
-
-1. In GitHub, open `public/config.json` in this repo and click the ✏️ edit button:
-   https://github.com/nursyaziah/worldcup-leaderboard/edit/main/public/config.json
-2. Paste in the **Project URL** and **anon key** (NOT the service_role key —
-   this file is public). Change `adminPin` if you want (default: `2026`).
-3. Commit — GitHub Actions redeploys automatically (~1 min). The app is now live
-   and playable. Share the URL in the family group! 🎉
-
-## Step 3 — Turn on automatic results (~4 min)
-
-1. Register free at https://www.football-data.org/client/register — the API
-   token arrives by email instantly.
-2. In GitHub: **Settings → Secrets and variables → Actions → New repository secret**,
-   add these three:
-   | Name | Value |
+1. In your Supabase project, run the whole of
+   [`supabase/schema.sql`](supabase/schema.sql) in the SQL Editor (once).
+2. Add these repository secrets
+   (**Settings → Secrets and variables → Actions**), from
+   **Project Settings → API** in Supabase:
+   | Secret | Value |
    |---|---|
-   | `SUPABASE_URL` | the Project URL |
-   | `SUPABASE_SERVICE_ROLE_KEY` | the service_role key |
-   | `FOOTBALL_DATA_TOKEN` | your football-data.org token |
-3. Done. The sync workflow already runs every ~5 minutes; once the secrets exist
-   it starts filling in TBD matchups, real kickoff times, and final results
-   automatically. To trigger one immediately: **Actions → Sync match data → Run workflow**.
+   | `SUPABASE_URL` | Project URL (`https://xxxx.supabase.co`) |
+   | `SUPABASE_ANON_KEY` | `anon` public key |
+   | `SUPABASE_SERVICE_ROLE_KEY` | `service_role` key |
+   | `ADMIN_PIN` | optional — admin PIN, defaults to `2026` |
 
----
+   (Or paste the URL + keys to Claude Code in chat and it does this part.)
+3. Re-run **Actions → Deploy to GitHub Pages → Run workflow**. Live in ~1 min.
+   The next sync run then fills in matchups, kickoff times, and results
+   automatically.
 
-## Tonight (before Round of 16 kicks off)
+## Before Round of 16 kicks off
 
-- Open the app → **⚙️ tab** → enter PIN → confirm/fix the 8 matchups and kickoff
-  times once tonight's Round-of-32 results are in (or just let the sync job do it
-  after Step 3 — anything you edit manually won't be overwritten).
-- Kickoff times display in **SGT**; picks lock automatically at kickoff
-  (enforced in the database, not just the UI).
+- Open the app → ⚙️ tab → PIN → sanity-check the 8 matchups/kickoffs once
+  tonight's results are in (the sync job should have them right; anything you
+  edit manually is never overwritten by the sync).
+- Kickoff times display in SGT; picks lock at kickoff (enforced in the DB).
 
-## Things I decided that you can change
+## Defaults you can change
 
-- **Scoring:** +1 winner, +2 exact 90-min score → one place: top of [`src/lib.js`](src/lib.js).
-- **Tiebreak:** points, then alphabetical (placeholder per the PRD).
-- **Repo is public** — required for free GitHub Pages hosting. The URL is
-  unlisted; nothing sensitive is in it (the admin PIN in config.json is
-  "trusted family" security, exactly as the PRD specified).
-- **Extra time/penalties:** winner pick = whoever advances; exact-score bonus =
-  regulation 90-min score. Both per the PRD.
+- Scoring (+1 winner / +2 exact 90-min score): top of [`src/lib.js`](src/lib.js).
+- Tiebreak: points, then alphabetical (placeholder per the PRD).
+- Repo is public (needed for free GitHub Pages). No keys or personal data in it.
 
 ## If something's wrong
 
-- Result wrong/missing? Fix it in the ⚙️ admin tab — manual results are never
-  overwritten by the sync job.
-- Sync not working? Check the **Actions** tab for red runs and read the log.
-- Want changes? Just ask Claude Code — the repo is the single source of truth.
+- Wrong/missing result → fix in the ⚙️ admin tab; manual edits stick.
+- Sync issues → check the repo's **Actions** tab logs.

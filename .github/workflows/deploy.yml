@@ -23,6 +23,17 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Write runtime config from secrets (no keys live in the repo)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          ADMIN_PIN: ${{ secrets.ADMIN_PIN }}
+        run: |
+          node -e "require('fs').writeFileSync('public/config.json', JSON.stringify({
+            supabaseUrl: process.env.SUPABASE_URL || '',
+            supabaseAnonKey: process.env.SUPABASE_ANON_KEY || '',
+            adminPin: process.env.ADMIN_PIN || '2026',
+          }, null, 2))"
       - run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
