@@ -1,0 +1,83 @@
+* { box-sizing: border-box; margin: 0; }
+:root {
+  --bg: #0f172a; --card: #1e293b; --card2: #263449; --text: #e2e8f0;
+  --dim: #94a3b8; --accent: #22c55e; --accent2: #16a34a; --bad: #f87171;
+  --gold: #fbbf24;
+}
+body {
+  background: var(--bg); color: var(--text);
+  font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100dvh;
+}
+#root { max-width: 480px; margin: 0 auto; padding: 12px 12px 40px; }
+
+.center { text-align: center; padding: 24px 8px; }
+.card { background: var(--card); border-radius: 16px; padding: 24px 16px; margin-top: 15vh; }
+.card h1 { font-size: 1.5rem; margin-bottom: 12px; }
+.card p { color: var(--dim); margin-bottom: 16px; }
+.card form { display: flex; gap: 8px; justify-content: center; }
+.setup { margin-top: 20vh; }
+code { background: var(--card2); padding: 2px 6px; border-radius: 6px; font-size: .85em; }
+
+header { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 4px; flex-wrap: wrap; gap: 4px; }
+header h1 { font-size: 1.15rem; }
+.who { color: var(--dim); font-size: .85rem; }
+
+nav { display: flex; gap: 6px; margin: 8px 0 14px; }
+nav button {
+  flex: 1; padding: 10px; border: 0; border-radius: 12px; background: var(--card);
+  color: var(--dim); font-size: .95rem; font-weight: 600;
+}
+nav button.on { background: var(--accent2); color: #fff; }
+nav button:last-child { flex: 0 0 52px; }
+
+button { cursor: pointer; font-family: inherit; }
+.primary {
+  background: var(--accent2); color: #fff; border: 0; border-radius: 10px;
+  padding: 10px 16px; font-weight: 700; font-size: .95rem;
+}
+.primary:disabled { opacity: .5; }
+.wide { width: 100%; margin-bottom: 8px; }
+.link { background: none; border: 0; color: var(--dim); text-decoration: underline; font-size: .85rem; padding: 0; }
+.bad { color: var(--bad); }
+.banner { background: #7f1d1d; color: #fecaca; border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; font-size: .9rem; }
+
+input, select {
+  background: var(--card2); color: var(--text); border: 1px solid #334155;
+  border-radius: 10px; padding: 9px 10px; font-size: 16px; min-width: 0;
+}
+
+.list section h2 { font-size: .95rem; color: var(--gold); margin: 14px 4px 8px; text-transform: uppercase; letter-spacing: .05em; }
+.match { background: var(--card); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
+.match.done { opacity: .92; }
+.meta { display: flex; justify-content: space-between; font-size: .78rem; color: var(--dim); margin-bottom: 8px; }
+.state { font-weight: 600; }
+.teams { display: flex; align-items: stretch; gap: 8px; }
+.vs { align-self: center; color: var(--dim); font-size: .8rem; }
+.team {
+  flex: 1; padding: 12px 6px; border-radius: 10px; border: 2px solid #334155;
+  background: var(--card2); color: var(--text); font-weight: 700; font-size: .95rem;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.team:disabled { opacity: .6; }
+.team.picked { border-color: var(--accent); background: #14532d; }
+.team.winner { border-color: var(--gold); }
+.team .sc { font-size: 1.1rem; color: var(--gold); }
+.scoreline { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: .8rem; color: var(--dim); flex-wrap: wrap; }
+.scoreline input { width: 56px; text-align: center; }
+
+.lb { display: flex; align-items: center; gap: 10px; background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 8px; }
+.lb.me { outline: 2px solid var(--accent); }
+.lb .rank { font-weight: 800; color: var(--gold); width: 24px; text-align: center; }
+.lb .name { flex: 1; font-weight: 600; }
+.lb .detail { color: var(--dim); font-size: .8rem; }
+.lb .pts { font-weight: 800; }
+
+.adm .row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.adm .row input { flex: 1; }
+.adm .row input[type=number] { flex: 0 0 64px; }
+.adm .src { flex: 1; font-size: .72rem; color: var(--dim); }
+.addrow { display: flex; gap: 8px; }
+.addrow button { flex: 1; background: var(--card); color: var(--text); border: 1px dashed #475569; border-radius: 10px; padding: 10px; }
+
+footer { text-align: center; color: var(--dim); font-size: .72rem; margin-top: 20px; padding: 0 8px; }
