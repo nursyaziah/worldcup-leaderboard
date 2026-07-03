@@ -46,9 +46,13 @@ export function scorePrediction(pred, match) {
   let pts = 0
   const winnerRight = pred.pick === match.result
   if (winnerRight) pts += POINTS_WINNER
-  const haveScore = match.score_a != null && match.score_b != null
-  const aRight = haveScore && pred.predicted_score_a === match.score_a
-  const bRight = haveScore && pred.predicted_score_b === match.score_b
+  // a score prediction only counts when both sides were filled in — the UI
+  // enforces that, but the API allows half-filled rows, and half a guess
+  // shouldn't be eligible for partial credit
+  const scorable = match.score_a != null && match.score_b != null &&
+    pred.predicted_score_a != null && pred.predicted_score_b != null
+  const aRight = scorable && pred.predicted_score_a === match.score_a
+  const bRight = scorable && pred.predicted_score_b === match.score_b
   const exact = aRight && bRight
   const partial = !exact && (aRight || bRight)
   if (exact) pts += POINTS_EXACT
