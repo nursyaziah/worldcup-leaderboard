@@ -77,6 +77,9 @@ for (const am of knockout) {
   }
 
   const finished = am.status === 'FINISHED'
+  if (finished && !am.score?.winner) {
+    console.log(`finished but winner not set yet for ${home} vs ${away}: ${JSON.stringify(am.score)}`)
+  }
   const live = ['IN_PLAY', 'PAUSED'].includes(am.status)
   const manualResult = row?.result_source === 'manual' // admin override wins
   if (!manualResult) {
