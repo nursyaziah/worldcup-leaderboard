@@ -15,14 +15,33 @@ const STAGE_TO_ROUND = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-const res = await fetch('https://api.football-data.org/v4/competitions/WC/matches', {
-  headers: { 'X-Auth-Token': FOOTBALL_DATA_TOKEN },
-})
-if (!res.ok) {
-  console.error(`football-data.org returned ${res.status}`)
-  process.exit(1)
+// football-data.org asks clients to watch the throttling headers
+// (X-Requests-Available-Minute / X-RequestCounter-Reset) instead of
+// blindly retrying into the rate limiter.
+async function fetchWithThrottle(url, attempt = 1) {
+  const res = await fetch(url, { headers: { 'X-Auth-Token': FOOTBALL_DATA_TOKEN } })
+  const available = res.headers.get('x-requests-available-minute')
+  const resetSec = Number(res.headers.get('x-requestcounter-reset')) || 60
+  if (res.status === 429) {
+    if (attempt >= 3) {
+      console.error(`football-data.org still rate limiting after ${attempt} attempts — giving up until next run`)
+      process.exit(1)
+    }
+    console.log(`rate limited (429); counter resets in ${resetSec}s — waiting before retry ${attempt + 1}`)
+    await new Promise(r => setTimeout(r, (resetSec + 1) * 1000))
+    return fetchWithThrottle(url, attempt + 1)
+  }
+  if (!res.ok) {
+    console.error(`football-data.org returned ${res.status}`)
+    process.exit(1)
+  }
+  if (available !== null && Number(available) <= 2) {
+    console.log(`warning: only ${available} requests left this minute (resets in ${resetSec}s)`)
+  }
+  return res.json()
 }
-const { matches: apiMatches = [] } = await res.json()
+
+const { matches: apiMatches = [] } = await fetchWithThrottle('https://api.football-data.org/v4/competitions/WC/matches')
 const knockout = apiMatches.filter(m => STAGE_TO_ROUND[m.stage])
 console.log(`API: ${knockout.length} knockout matches`)
 
@@ -81,7 +100,7 @@ for (const am of knockout) {
     claimed.add(row.id)
     const { error: e } = await supabase.from('matches').update(upd).eq('id', row.id)
     if (e) console.error(`update failed for ${extId}:`, e.message)
-    else console.log(`updated ${round} ${upd.team_a ?? row.team_a} vs ${upd.team_b ?? row.team_b}${upd.result ? ' (final)' : ''}`)
+    else console.log(`updated ${round} ${upd.team_a ?? row.team_a} vs ${upd.team_b ?? row.team_b}${upd.result ? ' (final)' : ` [api: ${am.status}]`}`)
   } else if (finished) {
     // never seen this match and it's already over (e.g. old R32 games) —
     // nobody could have predicted it, so don't clutter the app with it
