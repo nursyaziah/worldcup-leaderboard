@@ -1,42 +1,52 @@
-# ⚽ World Cup 2026 Family Prediction Leaderboard
+# ⚽ Aminah Headquaters — World Cup Prediction Game
 
-Private prediction game for family & friends for the 2026 World Cup knockout
-rounds. Pick winners, optionally guess exact scores, watch the live leaderboard.
+Private World Cup 2026 prediction game for the Aminah HQ family group.
+Pick winners for every knockout match (Round of 32 finale onwards), optionally
+guess the exact score for bonus points, and watch the live leaderboard.
 
-**Setting it up?** See [WAKE-UP-CHECKLIST.md](WAKE-UP-CHECKLIST.md).
+## Playing
+
+- Open the app link (shared in the family group), **sign up** with your email
+  and a password, and pick your leaderboard name.
+- For each match, tap the team you think will go through; optionally add a
+  90-minute score guess. You can change picks anytime **until kickoff**.
+- Scoring: **+1** for picking the team that advances (extra time/penalties
+  count), **+2 bonus** if your scoreline matches the 90-minute score exactly.
+- Kickoff times shown in **SGT**. Leaderboard: 🥇🥈🥉 by total points.
 
 ## How it works
 
 - **Frontend:** Vite + React, mobile-first, deployed to GitHub Pages on every
-  push to `main` (`.github/workflows/deploy.yml`). Runtime config (Supabase URL,
-  anon key, admin PIN) is generated into `public/config.json` at deploy time
-  from GitHub Actions secrets — no keys are committed to the repo.
-- **Database:** Supabase Postgres — schema + seed in `supabase/schema.sql`.
-  Players and predictions are written straight from the browser with the anon
-  key; RLS enforces the one hard rule (no predictions after kickoff).
+  push to `main` (`.github/workflows/deploy.yml`). Runtime config (Supabase
+  URL, publishable key, admin PIN) is generated into `public/config.json` at
+  deploy time from GitHub Actions secrets — **no keys are committed to the repo**.
+- **Auth:** Supabase Auth (email + password). Row-level security ties every
+  player row to its auth account — nobody can make or change picks for anyone
+  else, and prediction lock at kickoff is enforced by the database itself.
+- **Database:** Supabase Postgres. Fresh install: run `supabase/schema.sql`,
+  then `supabase/migration-2-auth.sql` in the SQL Editor.
 - **Results sync:** `scripts/sync.mjs` runs every ~5 min via GitHub Actions
-  (`.github/workflows/sync.yml`), pulling knockout matches from
-  football-data.org (competition `WC`) and writing team names, kickoff times,
-  and final results into Supabase. Admin manual edits (`result_source` /
-  `teams_source` = `manual`) are never overwritten.
-- **Scoring** (derived, never stored): +1 for picking the team that advances
-  (incl. ET/pens), +2 bonus for the exact regulation 90-minute score. Values
-  configurable at the top of `src/lib.js`.
-- **Admin:** ⚙️ tab, gated by the shared PIN in `public/config.json` — edit
-  matches, enter/correct results, add QF/SF/F matches, and copy a ready-to-paste
-  WhatsApp update.
+  (`.github/workflows/sync.yml`), pulling matches from football-data.org and
+  writing team names, kickoff times, and final results. Admin manual edits
+  (`result_source` / `teams_source` = `manual`) are never overwritten.
+- **Admin:** ⚙️ tab with shared PIN — edit matches, correct results, and copy
+  a ready-to-paste WhatsApp update.
+
+## Security
+
+- All credentials live only in GitHub Actions **encrypted secrets**
+  (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+  `FOOTBALL_DATA_TOKEN`, optional `ADMIN_PIN`).
+- Repo hardening: branch protection on `main` (no force pushes/deletion),
+  secret scanning with push protection, Dependabot alerts + auto security
+  fixes, only GitHub-authored actions allowed, workflow tokens read-only by
+  default.
+- The repo must stay **public** (free GitHub Pages requires it); that's safe
+  because it contains only code — no keys, no player data.
 
 ## Local dev
 
 ```bash
 npm install
-npm run dev
-```
-
-Fill `public/config.json` with your Supabase project URL + anon key first.
-
-## Manual sync run
-
-```bash
-SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... FOOTBALL_DATA_TOKEN=... npm run sync
+npm run dev     # needs a filled public/config.json (see deploy.yml for shape)
 ```
