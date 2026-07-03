@@ -1,0 +1,36 @@
+name: Set match result
+on:
+  workflow_dispatch:
+    inputs:
+      external_id:
+        description: football-data match id (external_id in the matches table)
+        required: true
+      score_a:
+        description: 90-min goals for team A
+        required: true
+      score_b:
+        description: 90-min goals for team B
+        required: true
+      result:
+        description: who goes through
+        required: true
+        type: choice
+        options: [team_a, team_b]
+jobs:
+  set-result:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/manual-result.mjs
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MATCH_EXTERNAL_ID: ${{ inputs.external_id }}
+          SCORE_A: ${{ inputs.score_a }}
+          SCORE_B: ${{ inputs.score_b }}
+          RESULT: ${{ inputs.result }}
