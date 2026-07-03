@@ -30,7 +30,8 @@ guess the exact score for bonus points, and watch the live leaderboard.
   writing team names, kickoff times, and final results. Admin manual edits
   (`result_source` / `teams_source` = `manual`) are never overwritten.
 - **Admin:** ⚙️ tab with shared PIN — edit matches, correct results, and copy
-  a ready-to-paste WhatsApp update.
+  a ready-to-paste WhatsApp update. If results seem stuck, check the
+  "Sync match data" logs in the repo's Actions tab.
 
 ## Security
 
